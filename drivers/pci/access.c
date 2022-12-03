@@ -79,7 +79,13 @@ int pci_generic_config_read(struct pci_bus *bus, unsigned int devfn,
 {
 	void __iomem *addr;
 
+
 	addr = bus->ops->map_bus(bus, devfn, where);
+
+
+dev_warn(&bus->dev, "[pci_generic_config_read] devfn: %d, where: %d", devfn, where);
+dev_warn(&bus->dev, "Vritual Addr: %d, Physical Addr: %d", addr, virt_to_phys(addr));
+
 	if (!addr) {
 		*val = ~0;
 		return PCIBIOS_DEVICE_NOT_FOUND;

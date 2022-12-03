@@ -47,6 +47,14 @@ struct pci_config_window *pci_ecam_create(struct device *dev,
 	cfg->busr.flags = IORESOURCE_BUS;
 	bus_range = resource_size(&cfg->busr);
 	bus_range_max = resource_size(cfgres) >> ops->bus_shift;
+
+	dev_warn(dev, "WORK WORK\n\n\n\n\n\n");
+  dev_warn(dev, "bus_range_max: %d, bus_range: %d\n", bus_range_max, bus_range);
+
+	dev_warn(dev, "[pci_ecam_create] Resource busr; start: %d, end: %d, bus_shift: %d\n\n", busr->start, busr->end, ops->bus_shift);
+	dev_warn(dev, "[pci_ecam_create] cfgres; start: %d, end: %d\n\n", cfgres->start, cfgres->end);
+
+
 	if (bus_range > bus_range_max) {
 		bus_range = bus_range_max;
 		cfg->busr.end = busr->start + bus_range - 1;

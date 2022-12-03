@@ -2772,23 +2772,30 @@ static unsigned int pci_scan_child_bus_extend(struct pci_bus *bus,
 
 	dev_dbg(&bus->dev, "scanning bus\n");
 
+	dev_warn(&bus->dev, "Inside pci_scan_child_bus_extend\n\n");
+
 	/* Go find them, Rover! */
 	for (devfn = 0; devfn < 256; devfn += 8) {
 		nr_devs = pci_scan_slot(bus, devfn);
 
-		/*
+		dev_warn(&bus->dev, "After pci_scan_slot (pci_scan_child_bus_extend) devfn: %d\n\n",devfn);
+
+/*
 		 * The Jailhouse hypervisor may pass individual functions of a
 		 * multi-function device to a guest without passing function 0.
 		 * Look for them as well.
 		 */
 		if (jailhouse_paravirt() && nr_devs == 0) {
 			for (fn = 1; fn < 8; fn++) {
+				dev_warn(&bus->dev, "Inside loop (pci_scan_child_bus_extend) fn: %d\n\n",fn);
 				dev = pci_scan_single_device(bus, devfn + fn);
 				if (dev)
 					dev->multifunction = 1;
 			}
 		}
 	}
+
+	dev_warn(&bus->dev, "After finding buses (pci_scan_child_bus_extend)\n\n");
 
 	/* Reserve buses for SR-IOV capability */
 	used_buses = pci_iov_bus_range(bus);
@@ -3081,7 +3088,11 @@ int pci_scan_root_bus_bridge(struct pci_host_bridge *bridge)
 		pci_bus_insert_busn_res(b, bus, 255);
 	}
 
+	dev_warn(&b->dev, "Before pci child bus\n\n");
+
 	max = pci_scan_child_bus(b);
+
+	dev_warn(&b->dev, "Scanned pci child bus\n\n");
 
 	if (!found)
 		pci_bus_update_busn_res_end(b, max);

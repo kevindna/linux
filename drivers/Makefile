@@ -188,3 +188,5 @@ obj-$(CONFIG_GNSS)		+= gnss/
 obj-$(CONFIG_INTERCONNECT)	+= interconnect/
 obj-$(CONFIG_COUNTER)		+= counter/
 obj-$(CONFIG_MOST)		+= most/
+# Added to put driver in kernel
+obj-$(CONFIG_PCIE_CS262A)   += pcie_cs262a_controller/
