@@ -83,8 +83,9 @@ int pci_generic_config_read(struct pci_bus *bus, unsigned int devfn,
 	addr = bus->ops->map_bus(bus, devfn, where);
 
 
-dev_warn(&bus->dev, "[pci_generic_config_read] devfn: %d, where: %d", devfn, where);
-dev_warn(&bus->dev, "Vritual Addr: %d, Physical Addr: %d", addr, virt_to_phys(addr));
+dev_warn(&bus->dev, "[pci_generic_config_read] devfn: %d, where: %d", 
+    devfn, where);
+dev_warn(&bus->dev, "[] Virtual Addr: 0x%llx\n", addr);
 
 	if (!addr) {
 		*val = ~0;

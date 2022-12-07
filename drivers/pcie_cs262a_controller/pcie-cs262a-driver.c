@@ -85,8 +85,8 @@ static void __iomem *cs262_pcie_map_bus(struct pci_bus *bus,
 
 
 	dev_warn(&bus->dev, "Sysdata: %d  relbus: %d", bus->sysdata, relbus);
-	return phys_to_virt(0x40000000);
-//	return port->reg_base + relbus + where;
+/* return phys_to_virt(0x40000000); */
+	return port->reg_base + relbus + where;
 }
 
 
@@ -230,6 +230,7 @@ static int cs262_pcie_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct cs262_pcie_port *port;
+  struct pci_bus *bus;
 	struct pci_host_bridge *bridge;
 	int err;
 
@@ -267,20 +268,23 @@ static int cs262_pcie_probe(struct platform_device *pdev)
 	//	return err;
 	//}
 
+  bridge->dev.parent = dev;
 	bridge->sysdata = port;
 	bridge->ops = &cs262_pcie_ops;
+/* bridge->map_irq = of_irq_parse_and_map_pci; */
+/* bridge->swizzle_irq = pci_common_swizzle; */
 
 	// err = pci_host_probe(bridge);
 	// if (err)
 	// 	cs262_free_msi_domains(port);
-
-
 
 	err = pci_scan_root_bus_bridge(bridge);
 	dev_warn(dev, "CS262 PCIE PROBE: %d (err) \n\n", err);
 
 	if (err < 0)
 		return err;
+
+  bus = bridge->bus;
 
  	// printk(KERN_EMERG, "CS262 PCIE PROBE: %d (err)\n\n", err);
 

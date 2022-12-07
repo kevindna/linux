@@ -2267,8 +2267,11 @@ static bool pci_bus_wait_crs(struct pci_bus *bus, int devfn, u32 *l,
 bool pci_bus_generic_read_dev_vendor_id(struct pci_bus *bus, int devfn, u32 *l,
 					int timeout)
 {
+  dev_warn(&bus->dev, "[pci_bus_generic_read_dev_vendor_id] started\n");
 	if (pci_bus_read_config_dword(bus, devfn, PCI_VENDOR_ID, l))
 		return false;
+
+  dev_warn(&bus->dev, "[] pci_bus_read_config_dword finished!\n\n");
 
 	/* Some broken boards return 0 or ~0 if a slot is empty: */
 	if (*l == 0xffffffff || *l == 0x00000000 ||
@@ -2285,6 +2288,7 @@ bool pci_bus_read_dev_vendor_id(struct pci_bus *bus, int devfn, u32 *l,
 				int timeout)
 {
 #ifdef CONFIG_PCI_QUIRKS
+  dev_warn(&bus->dev, "[pci_bus_read_dev_vendor_id], CONFIG_PCI_QUIRKS\n");
 	struct pci_dev *bridge = bus->self;
 
 	/*
@@ -2296,6 +2300,9 @@ bool pci_bus_read_dev_vendor_id(struct pci_bus *bus, int devfn, u32 *l,
 		return pci_idt_bus_quirk(bus, devfn, l, timeout);
 #endif
 
+  dev_warn(&bus->dev, "[pci_bus_read_dev_vendor_id], devfn: %d\n", devfn);
+  dev_warn(&bus->dev, "[pci_bus_read_dev_vendor_id], *l: %u\n", *l);
+  dev_warn(&bus->dev, "[pci_bus_read_dev_vendor_id], timeout: %d\n", timeout);
 	return pci_bus_generic_read_dev_vendor_id(bus, devfn, l, timeout);
 }
 EXPORT_SYMBOL(pci_bus_read_dev_vendor_id);
@@ -2309,8 +2316,12 @@ static struct pci_dev *pci_scan_device(struct pci_bus *bus, int devfn)
 	struct pci_dev *dev;
 	u32 l;
 
+  dev_warn(&bus->dev, "[pci_scan_device]: devfn: %d\n", devfn);
+
 	if (!pci_bus_read_dev_vendor_id(bus, devfn, &l, 60*1000))
 		return NULL;
+
+  dev_warn(&bus->dev, "[pci_scan_device]: pci_bus_read_dev_vendor_id done\n");
 
 	dev = pci_alloc_dev(bus);
 	if (!dev)
@@ -2473,12 +2484,18 @@ struct pci_dev *pci_scan_single_device(struct pci_bus *bus, int devfn)
 	struct pci_dev *dev;
 
 	dev = pci_get_slot(bus, devfn);
+
+  dev_warn(&bus->dev, "[pci_scan_single_device], pci_get_slot done!\n");
+  dev_warn(&bus->dev, "[pci_scan_single_device], dev: %d\n", dev);
 	if (dev) {
 		pci_dev_put(dev);
 		return dev;
 	}
 
+  dev_warn(&bus->dev, "[pci_scan_single_device], pci_scan_device start!\n");
 	dev = pci_scan_device(bus, devfn);
+  dev_warn(&bus->dev, "[pci_scan_single_device], dev: %d\n", dev);
+
 	if (!dev)
 		return NULL;
 
@@ -2554,10 +2571,16 @@ int pci_scan_slot(struct pci_bus *bus, int devfn)
 	unsigned fn, nr = 0;
 	struct pci_dev *dev;
 
+  dev_warn(&bus->dev, "[pci_scan_slot], check only_one_child\n\n");
 	if (only_one_child(bus) && (devfn > 0))
 		return 0; /* Already scanned the entire slot */
 
+  dev_warn(&bus->dev, "[pci_scan_slot], check pci_scan_single_device\n");
+
 	dev = pci_scan_single_device(bus, devfn);
+
+  dev_warn(&bus->dev, "[pci_scan_slot], dev: 0x%llx\n", dev);
+
 	if (!dev)
 		return 0;
 	if (!pci_dev_is_added(dev))
@@ -2575,6 +2598,8 @@ int pci_scan_slot(struct pci_bus *bus, int devfn)
 	/* Only one slot has PCIe device */
 	if (bus->self && nr)
 		pcie_aspm_init_link_state(bus->self);
+
+  dev_warn(&bus->dev, "[pci_scan_slot], nr: %d\n", nr);
 
 	return nr;
 }
