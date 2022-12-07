@@ -55,6 +55,11 @@ struct cs262_pcie_port {    // Driver's internal representation of root complex
 };
 
 
+/* static inline bool cs262_pcie_link_up(struct cs262_pcie_port *port) */
+/* { */
+/* return (pcie_read(port, ???) & ???) ? 1 : 0; */
+/* } */
+
 
 /**
  * xilinx_pcie_map_bus - Get configuration base
@@ -156,13 +161,16 @@ static void cs262_pcie_init_port(struct cs262_pcie_port *port) {
 */
 
 	//int val = readl(0x400000000);
+    
+    dev_warn(dev, "[cs262_pcie_init_port] started\n\n");
+    dev_warn(dev, "[cs262_pcie_init_port] port->reg_base: 0x%llx\n\n",
+             port->reg_base);
 
-	dev_warn(dev, "(cs262_pcie_init_port) Physical: %llx, Virtual: %px\n\n", 0x40000000, phys_to_virt(0x40000000));
+    readl(port->reg_base);
+    // NOTE : pcie_read(port->reg_base, 0x0) doesn't work??
+   /* pcie_read(port->reg_base, 0x0); */
 
-	int val = 0x40000000;
-	int val2 = readl(phys_to_virt(0x40000000));
-
-	dev_warn(dev, "(cs262_pcie_init_port) Direct read: %d, Read Virtual: %d\n\n", val, val2);
+    dev_warn(dev, "[cs262_pcie_init_port] ended\n\n");
 
 // TODO: Setup any config registers
 
@@ -178,31 +186,36 @@ static void cs262_pcie_init_port(struct cs262_pcie_port *port) {
  */
 static int cs262_pcie_parse_dt(struct cs262_pcie_port *port)
 {
-//	struct device *dev = port->dev;
-//	struct device_node *node = dev->of_node;
-//	struct resource regs;
-//	unsigned int irq;
-//	int err;
-//
-//	err = of_address_to_resource(node, 0, &regs);
-//	if (err) {
-//		dev_err(dev, "missing \"reg\" property\n");
-//		return err;
-//	}
-//
-//  port->cntrl_reg_base = ; // TODO: allocated and map control registers; cannot be simple malloc and mmap
-//	port->reg_base = devm_pci_remap_cfg_resource(dev, &regs);  // allocates and maps config space
-//	if (IS_ERR(port->reg_base))
-//		return PTR_ERR(port->reg_base);
-//
-//	irq = irq_of_parse_and_map(node, 0);
-//	err = devm_request_irq(dev, irq, cs262_pcie_intr_handler,
-//			       IRQF_SHARED | IRQF_NO_THREAD,
-//			       "xilinx-pcie", port);
-//	if (err) {
-//		dev_err(dev, "unable to request irq %d\n", irq);
-//		return err;
-//	}
+	struct device *dev = port->dev;
+	struct device_node *node = dev->of_node;
+	struct resource regs;
+	unsigned int irq;
+	int err;
+
+	err = of_address_to_resource(node, 0, &regs);
+	if (err) {
+		dev_err(dev, "call from of_address_to_resource returned, missing \"reg\" property\n");
+		return err;
+	}
+
+  dev_warn(dev, "[cs262_pcie_parse_dt] regs.start: 0x%llx, regs.end: 0x%llx\n\n",
+           regs.start, regs.end);
+
+/* port->cntrl_reg_base = ; // TODO: allocated and map control registers; cannot be simple malloc and mmap */
+  port->reg_base = devm_pci_remap_cfg_resource(dev, &regs);  // allocates and maps config space
+
+  dev_warn(dev, "[cs262_pcie_parse_dt] reg_base: 0x%llx\n\n", port->reg_base);
+  if (IS_ERR(port->reg_base))
+    return PTR_ERR(port->reg_base);
+
+/* irq = irq_of_parse_and_map(node, 0); */
+/* err = devm_request_irq(dev, irq, cs262_pcie_intr_handler, */
+/* IRQF_SHARED | IRQF_NO_THREAD, */
+/* "xilinx-pcie", port); */
+/* if (err) { */
+/* dev_err(dev, "unable to request irq %d\n", irq); */
+/* return err; */
+/* } */
 
 	return 0;
 }
@@ -230,17 +243,21 @@ static int cs262_pcie_probe(struct platform_device *pdev)
 	if (!bridge)
 		return -ENODEV;
 
-	dev_warn(dev, "[cs262_pcie_probe] brigde pointer: %d -- Physical Address: %d\n\n", bridge, virt_to_phys(bridge));
+	dev_warn(dev, "[cs262_pcie_probe] brigde pointer: %lx -- Physical Address: %lx\n\n", 
+           bridge, virt_to_phys(bridge));
 
 	port = pci_host_bridge_priv(bridge);
 	mutex_init(&port->map_lock);
 	port->dev = dev;
 
-	// err = cs262_pcie_parse_dt(port);
-	// if (err) {
-	// 	dev_err(dev, "Parsing DT failed\n");
-	// 	return err;
-	// }
+	err = cs262_pcie_parse_dt(port);
+	if (err) {
+		dev_err(dev, "Parsing DT failed\n");
+		return err;
+	}
+
+  dev_warn(dev, "[cs262_pcie_probe] reg_base: 0x%llx\n", 
+           port->reg_base);
 
 	cs262_pcie_init_port(port);
 
