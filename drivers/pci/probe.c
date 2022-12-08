@@ -2924,6 +2924,7 @@ static unsigned int pci_scan_child_bus_extend(struct pci_bus *bus,
 	 * Return how far we've got finding sub-buses.
 	 */
 	dev_dbg(&bus->dev, "bus scan returning with max=%02x\n", max);
+	dev_warn(&bus->dev, "bus scan returning with max=%02x\n", max);
 	return max;
 }
 

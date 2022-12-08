@@ -230,7 +230,7 @@ static int cs262_pcie_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct cs262_pcie_port *port;
-  struct pci_bus *bus;
+  struct pci_bus *bus, *child;
 	struct pci_host_bridge *bridge;
 	int err;
 
@@ -285,6 +285,11 @@ static int cs262_pcie_probe(struct platform_device *pdev)
 		return err;
 
   bus = bridge->bus;
+
+	pci_assign_unassigned_bus_resources(bus);
+	list_for_each_entry(child, &bus->children, node)
+		pcie_bus_configure_settings(child);
+	pci_bus_add_devices(bus);
 
  	// printk(KERN_EMERG, "CS262 PCIE PROBE: %d (err)\n\n", err);
 
